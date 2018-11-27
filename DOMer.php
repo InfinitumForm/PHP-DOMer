@@ -424,7 +424,90 @@ class DOMer
 			return $this->doctype.PHP_EOL.$dom->saveHTML($dom->documentElement);
 		}
 		else if($attr['compress'] === true)
-			return preg_replace("/(\t|\r|\n)/","",$html);
+		{
+			// Remove type from javascript and CSS
+			$buffer = preg_replace( "%[ ]type=[\'\"]text\/(javascript|css)[\'\"]%", '', $html );
+			// Add alt attribute to images where not exists
+			$buffer = preg_replace( '%(<img(?!.*?alt=([\'"]).*?\2)[^>]*?)(/?>)%', '$1 alt="" $3', $buffer );
+			$buffer = preg_replace( '%\s+alt="%', ' alt="', $buffer );
+			// clear HEAD
+			$buffer = preg_replace_callback('/(?=<head(.*?)>)(.*?)(?<=<\/head>)/s',
+			function($matches) {
+				return preg_replace(array(
+					'/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', // delete HTML comments
+					/* Fix HTML */
+					'/\>[^\S ]+/s',  // strip whitespaces after tags, except space
+					'/[^\S ]+\</s',  // strip whitespaces before tags, except space
+					'/\>\s+\</',    // strip whitespaces between tags
+				), array(
+					'',
+					/* Fix HTML */
+					'>',  // strip whitespaces after tags, except space
+					'<',  // strip whitespaces before tags, except space
+					'><',   // strip whitespaces between tags
+				), $matches[2]);
+			}, $buffer);
+			// clear BODY
+			$buffer = preg_replace_callback('/(?=<body(.*?)>)(.*?)(?<=<\/body>)/s',
+			function($matches) {
+				return preg_replace(array(
+					'/<!--(?!\s*(?:\[if [^\]]+]|<!|>))(?:(?!-->).)*-->/s', // delete HTML comments
+					/* Fix HTML */
+					'/\>[^\S ]+/s',  // strip whitespaces after tags, except space
+					'/[^\S ]+\</s',  // strip whitespaces before tags, except space
+					'/\>\s+\</',    // strip whitespaces between tags
+				), array(
+					'', // delete HTML comments
+					/* Fix HTML */
+					'>',  // strip whitespaces after tags, except space
+					'<',  // strip whitespaces before tags, except space
+					'> <',   // strip whitespaces between tags
+				), $matches[2]);
+			}, $buffer);
+			$buffer = preg_replace_callback('/(?=<script(.*?)>)(.*?)(?<=<\/script>)/s',
+			function($matches) {
+				return preg_replace(array(
+					'@\/\*(.*?)\*\/@s', // delete JavaScript comments
+					//'@((^|\t)\/{2,}.+?(\n|$))@s', // delete JavaScript comments
+					'@(\}(\n|\s+)else(\n|\s+)\{)@s', // fix "else" statemant
+					'@((\)\{)|(\)(\n|\s+)\{))@s', // fix brackets position
+					//'@(\}\)(\t+|\s+|\n+))@s', // fix closed functions
+					'@(\}(\n+|\t+|\s+)else\sif(\s+|)\()@s', // fix "else if"
+					'@(if|for|while|switch|function)\(@s', // fix "if, for, while, switch, function"
+					'@\s+(\={1,3}|\:)\s+@s', // fix " = and : "
+					'@\$\((.*?)\)@s', // fix $(  )
+					'@(if|while)\s\((.*?)\)\s\{@s', // fix "if|while ( ) {"
+					'@function\s\(\s+\)\s{@s', // fix "function ( ) {"
+					'@(\n{2,})@s', // fix multi new lines
+				), array(
+					"\n", // delete JavaScript comments
+					//"\n", // delete JavaScript comments
+					'} else {', // fix "else" statemant
+					') {', // fix brackets position
+					//"});\n", // fix closed functions
+					'} else if (', // fix "else if"
+					"$1 (",  // fix "if, for, while, switch, function"
+					" $1 ", // fix " = and : "
+					'$'."( $1 )", // fix $(  )
+					"$1 ( $2 ) {", // fix "if|while ( ) {"
+					'function () {', // fix "function ( ) {"
+					"\n", // fix multi new lines
+				), $matches[2]);
+			}, $buffer);
+			// Clear CSS
+			$buffer = preg_replace_callback('/(?=<style(.*?)>)(.*?)(?<=<\/style>)/s',
+			function($matches) {
+				return preg_replace(array(
+					'/([.#]?)([a-zA-Z0-9,_-]|\)|\])([\s|\t|\n|\r]+)?{([\s|\t|\n|\r]+)(.*?)([\s|\t|\n|\r]+)}([\s|\t|\n|\r]+)/s', // Clear brackets and whitespaces
+					'/([0-9a-zA-Z]+)([;,])([\s|\t|\n|\r]+)?/s' // Let's fix ,;
+				), array(
+					'$1$2{$5} ', // Clear brackets and whitespaces
+					'$1$2' // Let's fix ,;
+				), $matches[2]);
+			}, $buffer);
+			
+			return $buffer;
+		}
 		else
 			return $html;
 	}

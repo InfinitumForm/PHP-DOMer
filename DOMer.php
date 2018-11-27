@@ -131,7 +131,7 @@ class DOMer
 			'id'	=> 'column_1'
 		));
 	**/
-	public function attr(array $attr=array())
+	public function attr($attr=array())
 	{
 		$return=array();
 		
@@ -179,7 +179,7 @@ class DOMer
 			'col-lg-4'
 		));
 	**/
-	public function attr_class(array $class=array())
+	public function attr_class($class=array())
 	{
 		$return=array();
 		if(is_array($class))
@@ -266,7 +266,7 @@ class DOMer
 			)
 		), true);
 	**/
-	public function html($html, array $setup=array(),bool $echo=false)
+	public function html($html, $setup=array(), $echo=false)
 	{
 		if($echo===true)
 		{
@@ -320,7 +320,7 @@ class DOMer
 	}
 
 	/* Include scripts */
-	private function include_script(string $url, string $version='', string $path='', bool $echo=true){
+	private function include_script($url, $version='', $path='', $echo=true){
 		$id = '';
 		if(filter_var($url, FILTER_VALIDATE_URL)===false)
 		{
@@ -354,7 +354,7 @@ class DOMer
 	}
 	
 	/* Include styles */
-	private function include_style(string $url, string $version='', string $path='', bool $echo=true){
+	private function include_style($url, $version='', $path='', $echo=true){
 		$id = '';
 		if(filter_var($url, FILTER_VALIDATE_URL)===false)
 		{
@@ -386,7 +386,7 @@ class DOMer
 	}
 
 	/* Render HTML */
-	private function set_html($html, array $attr=array())
+	private function set_html($html, $attr=array())
 	{
 		$attr = array_replace(array(
 			'body_attr' => array(),
@@ -505,6 +505,13 @@ class DOMer
 					'$1$2' // Let's fix ,;
 				), $matches[2]);
 			}, $buffer);
+			// Clean between HEAD and BODY
+			$buffer = preg_replace( "%</head>([\s\t\n\r]+)<body%", '</head><body', $buffer );
+			// Clean between BODY and HTML
+			$buffer = preg_replace( "%</body>([\s\t\n\r]+)</html>%", '</body></html>', $buffer );
+			// Clean between HTML and HEAD
+			$buffer = preg_replace( "%<html(.*?)>([\s\t\n\r]+)<head%", '<html$1><head', $buffer );
+			
 			
 			return $buffer;
 		}
@@ -513,7 +520,7 @@ class DOMer
 	}
 
 	/* Set HTML versions */
-	private function set_version(string $version)
+	private function set_version($version)
 	{
 		$version = strtolower($version);
 		

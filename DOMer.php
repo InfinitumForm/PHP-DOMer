@@ -1,4 +1,4 @@
-<?php
+<?php defined('DOMer') or die('404 Not Found');
 /**
 * PHP DOM
 *
@@ -7,8 +7,9 @@
 * Rendering is simple, clean and there is no problems regarding unclosed tags, bad formats etc.
 *
 * @author    Ivijan-Stefan Stipic <creativform@gmail.com>
-* @version   1.0.0
+* @version   1.1.0
 * @license   Licensed under MIT License
+* @url       https://github.com/CreativForm/PHP-DOMer
 *
 * @pharam $version      string   -HTML version like: html5, html1, html 4.01, etc. (default html5)
 * @pharam $charset      string   -Charset like: UTF-8 (optional)
@@ -16,6 +17,12 @@
 *
 * EXAMPLE
 ____________________________________
+	// Define DOMer
+	define('DOMer',1);
+	
+	// Include DOMer class
+	include_once 'DOMer.php';
+	
 	// Initialize DOM
 	$dom = new DOMer('html5');
 	
@@ -468,7 +475,7 @@ class DOMer
 			function($matches) {
 				return preg_replace(array(
 					'@\/\*(.*?)\*\/@s', // delete JavaScript comments
-					//'@((^|\t)\/{2,}.+?(\n|$))@s', // delete JavaScript comments
+					'@((^|\t|\s|\r)\/{2,}.+?(\n|$))@s', // delete JavaScript comments
 					'@(\}(\n|\s+)else(\n|\s+)\{)@s', // fix "else" statemant
 					'@((\)\{)|(\)(\n|\s+)\{))@s', // fix brackets position
 					//'@(\}\)(\t+|\s+|\n+))@s', // fix closed functions
@@ -479,19 +486,23 @@ class DOMer
 					'@(if|while)\s\((.*?)\)\s\{@s', // fix "if|while ( ) {"
 					'@function\s\(\s+\)\s{@s', // fix "function ( ) {"
 					'@(\n{2,})@s', // fix multi new lines
+					'@([\r\n\s\t]+)(,)@s', // Fix comma
+					'@([\r\n\s\t]+)?([;,{}()]+)([\r\n\s\t]+)?@', // Put all inline
 				), array(
 					"\n", // delete JavaScript comments
-					//"\n", // delete JavaScript comments
-					'} else {', // fix "else" statemant
-					') {', // fix brackets position
+					"\n", // delete JavaScript comments
+					'}else{', // fix "else" statemant
+					'){', // fix brackets position
 					//"});\n", // fix closed functions
-					'} else if (', // fix "else if"
-					"$1 (",  // fix "if, for, while, switch, function"
+					'}else if(', // fix "else if"
+					"$1(",  // fix "if, for, while, switch, function"
 					" $1 ", // fix " = and : "
-					'$'."( $1 )", // fix $(  )
-					"$1 ( $2 ) {", // fix "if|while ( ) {"
-					'function () {', // fix "function ( ) {"
+					'$'."($1)", // fix $(  )
+					"$1 ($2) {", // fix "if|while ( ) {"
+					'function(){', // fix "function ( ) {"
 					"\n", // fix multi new lines
+					',', // fix comma
+					"$2", // Put all inline
 				), $matches[2]);
 			}, $buffer);
 			// Clear CSS
@@ -499,10 +510,12 @@ class DOMer
 			function($matches) {
 				return preg_replace(array(
 					'/([.#]?)([a-zA-Z0-9,_-]|\)|\])([\s|\t|\n|\r]+)?{([\s|\t|\n|\r]+)(.*?)([\s|\t|\n|\r]+)}([\s|\t|\n|\r]+)/s', // Clear brackets and whitespaces
-					'/([0-9a-zA-Z]+)([;,])([\s|\t|\n|\r]+)?/s' // Let's fix ,;
+					'/([0-9a-zA-Z]+)([;,])([\s|\t|\n|\r]+)?/s', // Let's fix ,;
+					'@([\r\n\s\t]+)?([;:,{}()]+)([\r\n\s\t]+)?@', // Put all inline
 				), array(
 					'$1$2{$5} ', // Clear brackets and whitespaces
-					'$1$2' // Let's fix ,;
+					'$1$2', // Let's fix ,;
+					"$2", // Put all inline
 				), $matches[2]);
 			}, $buffer);
 			// Clean between HEAD and BODY

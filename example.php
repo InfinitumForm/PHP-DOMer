@@ -1,6 +1,8 @@
 <?php
-// Include DOM class
-include 'DOMer.php';
+// Define DOMer
+define('DOMer',1);
+// Include DOMer class
+include_once 'DOMer.php';
 // Initialize DOM
 $dom = new DOMer('html5');
 // Include CSS

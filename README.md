@@ -14,21 +14,21 @@ This project is open source and I would like you to help in this development. Is
 
 Download and include `DOMer.php` file into your first lines of project like this:
 
-```
+```php
 <?php
 include_once '/path/to/DOMer.php';
 ```
 
 After that just simple call class
 
-```
+```php
 $dom = new DOMer();
 ```
 
 This will setup HTML5 DOM element for you with charset `UTF-8` and lang `en`.
 If you wish to change that pharams, you can simple do like this:
 
-```
+```php
 $dom = new DOMer('html5', 'ISO-3166-1', 'en');
 ```
 
@@ -36,7 +36,7 @@ $dom = new DOMer('html5', 'ISO-3166-1', 'en');
 
 When you initialize your DOM, now is ready for development. Here is one example of Twitter Bootstrap setup and rendered page via DOMer:
 
-```
+```php
 <?php
 include_once '/path/to/DOMer.php';
 
